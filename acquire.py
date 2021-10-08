@@ -252,3 +252,27 @@ def get_stores_data():
         df.to_csv('stores_df.csv')
         
     return df
+
+def get_London_data():
+    df = pd.read_csv('GlobalLandTemperaturesByMajorCity.csv', index_col=0)
+    #getting only data for London
+    df = df[df.City == 'London']
+    return df
+
+def prep_london_data(df):
+    #resetting index so we can convert the dates to datetime format
+    df.reset_index(inplace=True)
+    #converting to datetime format
+    df.dt = pd.to_datetime(df.dt)
+    #resetting the index so that now it's a datetime formatted index
+    df = df.set_index('dt').sort_index()
+    #trimming df to have consistent data with no nulls
+    df = df.loc['1752-10-01':'2013-08-01','AverageTemperature':'AverageTemperatureUncertainty']
+    #renaming columns for clarity
+    df = df.rename(columns={'AverageTemperature':'monthly_average_temp', 'AverageTemperatureUncertainty':'monthly_average_uncertainty'})
+    #creating new columns for possible high and low monthly temps
+    df['possible_high_temp'] = df['monthly_average_temp'] + df['monthly_average_uncertainty']
+    df['possible_low_temp'] = df['monthly_average_temp'] - df['monthly_average_uncertainty']
+    #making df to include only needed columns
+    df = df.loc[:,['monthly_average_temp', 'possible_high_temp', 'possible_low_temp']]
+    return df
